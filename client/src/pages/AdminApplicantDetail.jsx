@@ -49,14 +49,17 @@ const STATUS_BUTTON = {
 }
 
 export default function AdminApplicantDetail() {
-  const { retailerId } = useParams()
+  const { id: retailerId } = useParams()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     api.get(`/admin/applicants/${retailerId}`)
-      .then(r => setData(r.data.data))
+      .then(r => {
+        const d = r.data.data
+        setData({ ...d, latestAssessment: d.assessments?.[0] || null })
+      })
       .catch(() => toast.error('Failed to load applicant details'))
       .finally(() => setLoading(false))
   }, [retailerId])
@@ -92,16 +95,18 @@ export default function AdminApplicantDetail() {
   const { retailer, latestAssessment, assessments } = data
 
   /* Factor breakdown chart data */
-  const factorData = latestAssessment?.factors
-    ? Object.entries(latestAssessment.factors).map(([name, contribution]) => ({
-        name: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-        contribution: parseFloat(contribution.toFixed(2))
+  const factorData = Array.isArray(latestAssessment?.factorBreakdown)
+    ? latestAssessment.factorBreakdown.map(f => ({
+        name: f.factor,
+        contribution: Number(f.contribution) || 0,
+        impact: f.impact,
+        tip: f.tip
       })).sort((a, b) => b.contribution - a.contribution)
     : []
 
   /* Financial history chart data */
-  const finHistory = retailer?.financialHistory
-    ? retailer.financialHistory.map(m => ({
+  const finHistory = Array.isArray(data.financials)
+    ? data.financials.map(m => ({
         month: m.month,
         Sales: m.sales,
         Expenses: m.expenses
@@ -109,7 +114,7 @@ export default function AdminApplicantDetail() {
     : []
 
   /* Improvement tips: negative-contribution factors */
-  const tips = factorData.filter(f => f.contribution < 0)
+  const tips = factorData.filter(f => f.impact === 'negative')
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
@@ -220,7 +225,7 @@ export default function AdminApplicantDetail() {
                 {factorData.map((entry, i) => (
                   <Cell
                     key={i}
-                    fill={entry.contribution >= 0 ? '#3b82f6' : '#ef4444'}
+                    fill={entry.impact !== 'negative' ? '#3b82f6' : '#ef4444'}
                     fillOpacity={0.85}
                   />
                 ))}
@@ -239,9 +244,7 @@ export default function AdminApplicantDetail() {
               <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
                 <span className="text-amber-500 mt-0.5">▸</span>
                 <span>
-                  <strong>{t.name}</strong> is dragging the score down by{' '}
-                  <span className="text-red-600 font-semibold">{Math.abs(t.contribution)} pts</span>.
-                  Improving this metric will positively impact the credit score.
+                  <strong>{t.name}</strong>: {t.tip || 'Improving this metric will positively impact the credit score.'}
                 </span>
               </li>
             ))}

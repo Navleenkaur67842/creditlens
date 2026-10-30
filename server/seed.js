@@ -8,7 +8,7 @@ const FinancialRecord = require('./src/models/FinancialRecord');
 const Assessment = require('./src/models/Assessment');
 const { computeScore, generateLocalSummary } = require('./src/services/scoring');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/creditlens';
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/creditlens';
 
 function generateMonths(count, startOffset = 0) {
   const months = [];

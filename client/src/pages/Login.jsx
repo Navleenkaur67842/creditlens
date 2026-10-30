@@ -95,11 +95,7 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Demo credentials */}
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
-            <strong>Demo:</strong> admin@creditlens.com / Admin@123 (Admin)<br />
-            Or any seeded retailer: password is Retailer@123
-          </div>
+
 
           <p className="mt-4 text-center text-sm text-gray-500">
             Don't have an account?{' '}
